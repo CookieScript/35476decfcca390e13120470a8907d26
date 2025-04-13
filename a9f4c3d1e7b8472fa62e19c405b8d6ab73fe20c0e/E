@@ -159,40 +159,52 @@ function Library:CreateLabel(Properties, IsHud)
 	return Library:Create(_Instance, Properties)
 end
 
+
 function Library:MakeDraggable(instance, Cutoff)
-	instance.Active = true;
+	instance.Active = true
 
-	instance.InputBegan:Connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-			local ObjPos = Vector2.new(
-				Mouse.X - instance.AbsolutePosition.X,
-				Mouse.Y - instance.AbsolutePosition.Y
-			);
+	local dragging, dragInput, dragStart, startPos
 
-			if ObjPos.Y > (Cutoff or 40) then
-				return;
-			
-	instance.InputBegan:Connect(function(Input)
-		if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.Touch then
+	local function update(input)
+		local delta = input.Position - dragStart
+		instance.Position = UDim2.new(
+			0,
+			startPos.X.Offset + delta.X,
+			0,
+			startPos.Y.Offset + delta.Y
+		)
+	end
+
+	instance.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			local ObjPos = Vector2.new(
-				Input.Position.X - instance.AbsolutePosition.X,
-				Input.Position.Y - instance.AbsolutePosition.Y
-			);
+				input.Position.X - instance.AbsolutePosition.X,
+				input.Position.Y - instance.AbsolutePosition.Y
+			)
 
 			if ObjPos.Y > (Cutoff or 40) then return end
 
-			local inputConn
-			inputConn = RunService.RenderStepped:Connect(function()
-				if UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) or UIS.TouchEnabled then
-					local pos = UIS:GetMouseLocation()
-					instance.Position = UDim2.new(0, pos.X - ObjPos.X, 0, pos.Y - ObjPos.Y)
-				else
-					inputConn:Disconnect()
+			dragging = true
+			dragStart = input.Position
+			startPos = instance.Position
+
+			dragInput = input
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
 				end
 			end)
 		end
 	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and input == dragInput then
+			update(input)
+		end
+	end)
 end;
+
 
 			local startPos = instance.Position
 
